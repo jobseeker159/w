@@ -2,7 +2,7 @@
 let userAnswers = {};
 let showingAnswers = false;
 let answeredQuestions = new Set();
-const STORAGE_KEY = 'osg202_quiz_state_' + document.title.replace(/\s+/g, '_');
+const STORAGE_KEY = 'wed201c_quiz_state_' + document.title.replace(/\s+/g, '_');
 
 // Auto-save state to localStorage
 function saveState() {
