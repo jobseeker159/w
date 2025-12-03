@@ -184,6 +184,7 @@ h4 {
     border-color: #5a9367;
     background: #d4e8d4;
     box-shadow: 3px 3px 0px #3e2731;
+    font-weight: normal;
 }
 
 .option-item.correct,
@@ -204,7 +205,6 @@ h4 {
 .option-item.user-selected {
     border-color: #5a9367;
     background: #d4e8d4;
-    font-weight: bold;
 }
 
 .option-item.user-incorrect {
