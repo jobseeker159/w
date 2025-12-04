@@ -73,13 +73,28 @@ function exportResults() {
 }
 
 function initQuiz() {
+    // Kiểm tra xem questions có tồn tại không
+    if (typeof questions === 'undefined' || !Array.isArray(questions)) {
+        console.error('Questions array không tồn tại hoặc không hợp lệ!');
+        document.getElementById('quizContent').innerHTML = '<div style="color: red; padding: 20px;">Lỗi: Không thể load câu hỏi. Vui lòng kiểm tra file data.js</div>';
+        return;
+    }
+    
+    console.log('Total questions loaded:', questions.length);
+    
     // Tự động cập nhật tổng số câu hỏi
     document.getElementById('totalQuestions').textContent = questions.length;
     
     // Load saved state if exists
     const hasState = loadState();
     
-    renderAllQuestions();
+    try {
+        renderAllQuestions();
+    } catch (error) {
+        console.error('Lỗi khi render câu hỏi:', error);
+        document.getElementById('quizContent').innerHTML = '<div style="color: red; padding: 20px;">Lỗi: ' + error.message + '</div>';
+        return;
+    }
     
     // Restore UI state if data was loaded
     if (hasState) {
@@ -115,28 +130,59 @@ function restoreUIState() {
 
 function renderAllQuestions() {
     const quizContent = document.getElementById('quizContent');
+    quizContent.innerHTML = ''; // Clear first
     
-    quizContent.innerHTML = questions.map(question => `
+    let successCount = 0;
+    let errorCount = 0;
+    
+    questions.forEach((question, qIndex) => {
+        try {
+            // Escape HTML in question text to prevent execution
+            let formattedQuestion = question.question
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>')
+                .replace(/  /g, '&nbsp;&nbsp;');
+            
+            // CRITICAL: Also escape backticks and ${ to prevent template literal issues
+            formattedQuestion = formattedQuestion.replace(/`/g, '&#96;').replace(/\${/g, '&#36;{');
+            
+            let html = `
         <div class="question-item" id="question-${question.id}">
             <div class="question-header">
                 <div class="question-number">Câu ${question.id}</div>
                 <div class="question-status" id="status-${question.id}">❓</div>
             </div>
             
-            <div class="question-text">${question.question}</div>
+            <div class="question-text">${formattedQuestion}</div>
             
             <div class="options-container">
-                ${question.options.map((option, index) => `
+                ${question.options.map((option, index) => {
+                    // Remove "A. ", "B. ", etc. if already present in option text
+                    let cleanOption = option.replace(/^[A-D]\.\s*/, '');
+                    const letter = String.fromCharCode(65 + index);
+                    
+                    // Escape HTML in options
+                    cleanOption = cleanOption
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/`/g, '&#96;')
+                        .replace(/\${/g, '&#36;{');
+                    
+                    return `
                     <div class="option-item" onclick="selectOption(${question.id}, ${index})">
                         ${question.type === 'multiple' ? 
                             `<input type="checkbox" class="option-checkbox" id="q${question.id}-opt${index}" onchange="selectOption(${question.id}, ${index})">` :
                             `<input type="radio" name="q${question.id}" class="option-radio" id="q${question.id}-opt${index}" onchange="selectOption(${question.id}, ${index})">`
                         }
                         <label class="option-text" for="q${question.id}-opt${index}">
-                            ${String.fromCharCode(65 + index)}. ${option}
+                            ${letter}. ${cleanOption}
                         </label>
                     </div>
-                `).join('')}
+                `;
+                }).join('')}
             </div>
             
             <div class="question-actions">
@@ -150,7 +196,22 @@ function renderAllQuestions() {
                 <p>${question.explanation}</p>
             </div>
         </div>
-    `).join('');
+    `;
+            
+            // Append each question individually
+            quizContent.innerHTML += html;
+            successCount++;
+        } catch (error) {
+            errorCount++;
+            console.error(`Lỗi khi render câu ${question.id}:`, error);
+            console.error('Question data:', question);
+        }
+    });
+    
+    console.log(`Đã render ${successCount}/${questions.length} câu hỏi`);
+    if (errorCount > 0) {
+        console.warn(`Có ${errorCount} câu hỏi gặp lỗi khi render`);
+    }
 }
 
 function selectOption(questionId, optionIndex) {
