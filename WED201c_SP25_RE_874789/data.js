@@ -679,7 +679,7 @@ const questions = [
             "i tag",
             "strong tag"
         ],
-        correct: 1, // Key: B (Lưu ý: 'I tag' thường là Italic, nhưng Key là B. Emphasized thường là <em> hoặc <i>)
+        correct: 2, // Key: B (Lưu ý: 'I tag' thường là Italic, nhưng Key là B. Emphasized thường là <em> hoặc <i>)
         type: "single",
         explanation: "Đáp án đúng là B."
     },
@@ -887,4 +887,5 @@ const questions = [
         type: "single",
         explanation: "Đáp án đúng là A."
     }
+
 ];
